@@ -24,29 +24,43 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Method invocation recorder.
+ * 方法调用记录器，用于跟踪并回放目标对象的方法调用。
+ * 通常用于 JDBC 对象（如 Statement、Connection）的代理场景，实现方法调用的延迟执行或重放。
  *
- * @param <T> type of target
+ * @param <T> 目标对象类型（需与 ForceExecuteCallback 的泛型类型一致）
  */
 public final class MethodInvocationRecorder<T> {
-    
-    private final Map<String, ForceExecuteCallback<T>> methodInvocations = new LinkedHashMap<>();
-    
     /**
-     * Record method invocation.
+     * 方法调用记录映射表：
+     * - Key: 方法名称（如 "executeQuery"）
+     * - Value: 对应的回调逻辑（通过 ForceExecuteCallback 封装）
      *
-     * @param methodName method name
-     * @param callback callback
+     * 使用 LinkedHashMap 保证方法调用的记录顺序与回放顺序一致。
+     */
+    private final Map<String, ForceExecuteCallback<T>> methodInvocations = new LinkedHashMap<>();
+
+    /**
+     * 记录一个方法调用。
+     *
+     * @param methodName 方法名称（用于唯一标识调用）
+     * @param callback   方法实际执行逻辑的回调接口
+     *
+     * @example
+     * recorder.record("executeQuery", stmt -> stmt.executeQuery(sql));
      */
     public void record(final String methodName, final ForceExecuteCallback<T> callback) {
         methodInvocations.put(methodName, callback);
     }
-    
+
     /**
-     * Replay methods invocation.
+     * 回放所有已记录的方法调用。
+     * 按照方法记录的先后顺序依次执行，若任一回调抛出异常，则终止回放并向上抛出。
      *
-     * @param target target object
-     * @throws SQLException SQL Exception
+     * @param target 目标对象（回调逻辑的执行载体）
+     * @throws SQLException 如果回调执行过程中抛出 SQL 异常
+     *
+     * @example
+     * recorder.replay(realStatement); // 在真实 Statement 上重放所有记录的方法
      */
     public void replay(final T target) throws SQLException {
         for (ForceExecuteCallback<T> each : methodInvocations.values()) {

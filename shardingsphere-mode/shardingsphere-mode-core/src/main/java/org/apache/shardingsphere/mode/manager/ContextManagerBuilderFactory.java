@@ -31,14 +31,15 @@ import java.util.Properties;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ContextManagerBuilderFactory {
-    
+
+    //采用SPI机制注册加载路由装饰器类、SQL重写装饰器类、结果出来引擎类
     static {
         ShardingSphereServiceLoader.register(ContextManagerBuilder.class);
     }
-    
+
     /**
      * Build context manager.
-     * 
+     *
      * @param modeConfig mode configuration
      * @return context manager
      */

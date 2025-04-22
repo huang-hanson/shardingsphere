@@ -33,146 +33,147 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * ShardingSphere data source factory.
+ * ShardingSphere 数据源工厂类。
+ * 提供多种方式创建支持分片、读写分离等功能的 ShardingSphere 数据源。
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ShardingSphereDataSourceFactory {
-    
+
     /**
-     * Create ShardingSphere data source.
+     * 根据 schema 名称和模式配置创建数据源。
      *
-     * @param schemaName schema name
-     * @param modeConfig mode configuration
-     * @return ShardingSphere data source
-     * @throws SQLException SQL exception
+     * @param schemaName 数据库逻辑名称（可为空）
+     * @param modeConfig 模式配置（Standalone, Cluster, Memory 等）
+     * @return ShardingSphere 数据源
+     * @throws SQLException SQL 异常
      */
     public static DataSource createDataSource(final String schemaName, final ModeConfiguration modeConfig) throws SQLException {
         return new ShardingSphereDataSource(Strings.isNullOrEmpty(schemaName) ? DefaultSchema.LOGIC_NAME : schemaName, modeConfig);
     }
-    
+
     /**
-     * Create ShardingSphere data source.
+     * 根据模式配置创建默认逻辑 schema 的数据源。
      *
-     * @param modeConfig mode configuration
-     * @return ShardingSphere data source
-     * @throws SQLException SQL exception
+     * @param modeConfig 模式配置
+     * @return ShardingSphere 数据源
+     * @throws SQLException SQL 异常
      */
     public static DataSource createDataSource(final ModeConfiguration modeConfig) throws SQLException {
         return createDataSource(DefaultSchema.LOGIC_NAME, modeConfig);
     }
-    
+
     /**
-     * Create ShardingSphere data source.
+     * 创建包含分片规则等配置的数据源。
      *
-     * @param schemaName schema name
-     * @param modeConfig mode configuration
-     * @param dataSourceMap data source map
-     * @param configs rule configurations
-     * @param props properties for data source
-     * @return ShardingSphere data source
-     * @throws SQLException SQL exception
+     * @param schemaName 数据库逻辑名称
+     * @param modeConfig 模式配置
+     * @param dataSourceMap 数据源映射（key 为数据源名称）
+     * @param configs 规则配置集合（如分片、读写分离、影子库等）
+     * @param props 配置属性（用于自定义行为）
+     * @return ShardingSphere 数据源
+     * @throws SQLException SQL 异常
      */
-    public static DataSource createDataSource(final String schemaName, final ModeConfiguration modeConfig, 
+    public static DataSource createDataSource(final String schemaName, final ModeConfiguration modeConfig,
                                               final Map<String, DataSource> dataSourceMap, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
         return new ShardingSphereDataSource(Strings.isNullOrEmpty(schemaName) ? DefaultSchema.LOGIC_NAME : schemaName, modeConfig, dataSourceMap, configs, props);
     }
-    
+
     /**
-     * Create ShardingSphere data source.
+     * 创建包含配置的默认 schema 数据源。
      *
-     * @param modeConfig mode configuration
-     * @param dataSourceMap data source map
-     * @param configs rule configurations
-     * @param props properties for data source
-     * @return ShardingSphere data source
-     * @throws SQLException SQL exception
+     * @param modeConfig 模式配置
+     * @param dataSourceMap 数据源映射
+     * @param configs 规则配置集合
+     * @param props 配置属性
+     * @return ShardingSphere 数据源
+     * @throws SQLException SQL 异常
      */
-    public static DataSource createDataSource(final ModeConfiguration modeConfig, 
+    public static DataSource createDataSource(final ModeConfiguration modeConfig,
                                               final Map<String, DataSource> dataSourceMap, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
         return createDataSource(DefaultSchema.LOGIC_NAME, modeConfig, dataSourceMap, configs, props);
     }
-    
+
     /**
-     * Create ShardingSphere data source.
+     * 根据单个数据源创建带有规则配置的数据源。
      *
-     * @param schemaName schema name
-     * @param modeConfig mode configuration
-     * @param dataSource data source
-     * @param configs rule configurations
-     * @param props properties for data source
-     * @return ShardingSphere data source
-     * @throws SQLException SQL exception
+     * @param schemaName 数据库逻辑名称
+     * @param modeConfig 模式配置
+     * @param dataSource 单个数据源
+     * @param configs 规则配置集合
+     * @param props 配置属性
+     * @return ShardingSphere 数据源
+     * @throws SQLException SQL 异常
      */
-    public static DataSource createDataSource(final String schemaName, final ModeConfiguration modeConfig, 
+    public static DataSource createDataSource(final String schemaName, final ModeConfiguration modeConfig,
                                               final DataSource dataSource, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
         return createDataSource(schemaName, modeConfig, Collections.singletonMap(Strings.isNullOrEmpty(schemaName) ? DefaultSchema.LOGIC_NAME : schemaName, dataSource), configs, props);
     }
-    
+
     /**
-     * Create ShardingSphere data source.
+     * 根据单个数据源创建默认 schema 的数据源。
      *
-     * @param modeConfig mode configuration
-     * @param dataSource data source
-     * @param configs rule configurations
-     * @param props properties for data source
-     * @return ShardingSphere data source
-     * @throws SQLException SQL exception
+     * @param modeConfig 模式配置
+     * @param dataSource 单个数据源
+     * @param configs 规则配置集合
+     * @param props 配置属性
+     * @return ShardingSphere 数据源
+     * @throws SQLException SQL 异常
      */
-    public static DataSource createDataSource(final ModeConfiguration modeConfig, 
+    public static DataSource createDataSource(final ModeConfiguration modeConfig,
                                               final DataSource dataSource, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
         return createDataSource(modeConfig, Collections.singletonMap(DefaultSchema.LOGIC_NAME, dataSource), configs, props);
     }
-    
+
     /**
-     * Create ShardingSphere data source.
+     * 不使用模式配置，仅使用 schema 和配置创建数据源。
      *
-     * @param schemaName schema name
-     * @param dataSourceMap data source map
-     * @param configs rule configurations
-     * @param props properties for data source
-     * @return ShardingSphere data source
-     * @throws SQLException SQL exception
+     * @param schemaName 数据库逻辑名称
+     * @param dataSourceMap 数据源映射
+     * @param configs 规则配置集合
+     * @param props 配置属性
+     * @return ShardingSphere 数据源
+     * @throws SQLException SQL 异常
      */
     public static DataSource createDataSource(final String schemaName,
                                               final Map<String, DataSource> dataSourceMap, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
         return createDataSource(schemaName, null, dataSourceMap, configs, props);
     }
-    
+
     /**
-     * Create ShardingSphere data source.
+     * 不使用 schema 和模式配置，仅使用数据源映射和规则创建数据源。
      *
-     * @param dataSourceMap data source map
-     * @param configs rule configurations
-     * @param props properties for data source
-     * @return ShardingSphere data source
-     * @throws SQLException SQL exception
+     * @param dataSourceMap 数据源映射
+     * @param configs 规则配置集合
+     * @param props 配置属性
+     * @return ShardingSphere 数据源
+     * @throws SQLException SQL 异常
      */
     public static DataSource createDataSource(final Map<String, DataSource> dataSourceMap, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
         return createDataSource((ModeConfiguration) null, dataSourceMap, configs, props);
     }
-    
+
     /**
-     * Create ShardingSphere data source.
+     * 使用 schema 名称和单个数据源创建数据源。
      *
-     * @param schemaName schema name
-     * @param dataSource data source
-     * @param configs rule configurations
-     * @param props properties for data source
-     * @return ShardingSphere data source
-     * @throws SQLException SQL exception
+     * @param schemaName 数据库逻辑名称
+     * @param dataSource 单个数据源
+     * @param configs 规则配置集合
+     * @param props 配置属性
+     * @return ShardingSphere 数据源
+     * @throws SQLException SQL 异常
      */
     public static DataSource createDataSource(final String schemaName, final DataSource dataSource, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
         return createDataSource(schemaName, null, dataSource, configs, props);
     }
-    
+
     /**
-     * Create ShardingSphere data source.
+     * 使用单个数据源创建默认 schema 的数据源。
      *
-     * @param dataSource data source
-     * @param configs rule configurations
-     * @param props properties for data source
-     * @return ShardingSphere data source
-     * @throws SQLException SQL exception
+     * @param dataSource 单个数据源
+     * @param configs 规则配置集合
+     * @param props 配置属性
+     * @return ShardingSphere 数据源
+     * @throws SQLException SQL 异常
      */
     public static DataSource createDataSource(final DataSource dataSource, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
         return createDataSource((ModeConfiguration) null, dataSource, configs, props);

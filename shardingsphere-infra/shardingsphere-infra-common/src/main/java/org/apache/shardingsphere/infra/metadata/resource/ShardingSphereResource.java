@@ -29,43 +29,67 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 /**
- * ShardingSphere resource.
+ * ShardingSphere 物理数据源资源管理器，统一管理所有底层数据库连接池及其元数据。
+ * 1. 维护数据源的生命周期（创建、销毁）
+ * 2. 提供数据库类型和元数据的快速访问
+ * 3. 支持多实例模式（如读写分离的主从库）
  */
 @RequiredArgsConstructor
 @Getter
 public final class ShardingSphereResource {
-    
-    private final Map<String, DataSource> dataSources;
-    
-    private final DataSourcesMetaData dataSourcesMetaData;
-    
-    private final CachedDatabaseMetaData cachedDatabaseMetaData;
-    
-    private final DatabaseType databaseType;
-    
     /**
-     * Get all instance data sources.
+     * 数据源集合（Key为数据源名称，Value为物理数据源对象）
+     * 示例：
+     * {
+     *   "ds_0": HikariDataSource@1234,
+     *   "ds_1": DruidDataSource@5678
+     * }
+     */
+    private final Map<String, DataSource> dataSources;
+    /**
+     * 数据源元数据，包含：
+     * - 数据源URL、用户名等连接信息
+     * - 实例分组（如主从库的读写分离组）
+     */
+    private final DataSourcesMetaData dataSourcesMetaData;
+    /**
+     * 缓存的数据库元数据，避免频繁访问数据库系统表：
+     * - 表结构信息
+     * - 索引信息
+     * - 约束信息
+     */
+    private final CachedDatabaseMetaData cachedDatabaseMetaData;
+    /**
+     * 数据库类型（MySQL/Oracle/PostgreSQL等），用于：
+     * - SQL方言适配
+     * - 分页语法生成
+     * - DDL语句转换
+     */
+    private final DatabaseType databaseType;
+
+    /**
+     * 获取所有实例级数据源（通常用于读写分离场景）
      *
-     * @return all instance data sources
+     * @return 去重后的实例数据源集合（相同IP:PORT的多个库只返回一个连接池）
      */
     public Collection<DataSource> getAllInstanceDataSources() {
         return dataSources.entrySet().stream().filter(entry -> dataSourcesMetaData.getAllInstanceDataSourceNames().contains(entry.getKey())).map(Entry::getValue).collect(Collectors.toSet());
     }
-    
+
     /**
-     * Get not existed resource name.
-     * 
-     * @param resourceNames resource names to be judged
-     * @return not existed resource names
+     * 校验资源名称是否存在
+     *
+     * @param resourceNames 待校验的资源名称集合
+     * @return 不存在的资源名称集合（用于配置校验）
      */
     public Collection<String> getNotExistedResources(final Collection<String> resourceNames) {
         return resourceNames.stream().filter(each -> !dataSources.containsKey(each)).collect(Collectors.toSet());
     }
-    
+
     /**
-     * Close data source.
+     * 异步关闭数据源连接池（防止应用关闭时连接泄漏）
      *
-     * @param dataSource data source to be closed
+     * @param dataSource 待关闭的数据源对象
      */
     public void close(final DataSource dataSource) {
         new DataSourcePoolDestroyer(dataSource).asyncDestroy();
