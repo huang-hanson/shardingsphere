@@ -28,98 +28,105 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * ShardingSphere schema.
+ * ShardingSphere 的逻辑 Schema 对象，封装了当前逻辑库中所有表的元数据信息。
  */
 @Getter
 public final class ShardingSphereSchema {
-    
+    // 存储表名与其对应的元数据信息（键为小写表名）
     private final Map<String, TableMetaData> tables;
-    
+    /**
+     * 默认构造函数，初始化空的表结构集合。
+     */
     @SuppressWarnings("CollectionWithoutInitialCapacity")
     public ShardingSphereSchema() {
         tables = new ConcurrentHashMap<>();
     }
-    
+    /**
+     * 通过已有表结构 Map 构造 Schema。
+     * 会将所有表名转换为小写，以便忽略大小写敏感。
+     *
+     * @param tables 表结构信息映射
+     */
     public ShardingSphereSchema(final Map<String, TableMetaData> tables) {
         this.tables = new ConcurrentHashMap<>(tables.size(), 1);
         tables.forEach((key, value) -> this.tables.put(key.toLowerCase(), value));
     }
-    
+
     /**
-     * Get all table names.
+     * 获取所有的表名集合。
      *
-     * @return all table names
+     * @return 所有表名（小写）
      */
     public Collection<String> getAllTableNames() {
         return tables.keySet();
     }
-    
+
     /**
-     * Get table meta data via table name.
-     * 
-     * @param tableName tableName table name
-     * @return table meta data
+     * 根据表名获取表的元数据信息。
+     *
+     * @param tableName 表名
+     * @return 表的元数据（TableMetaData）
      */
     public TableMetaData get(final String tableName) {
         return tables.get(tableName.toLowerCase());
     }
-    
+
     /**
-     * Add table meta data.
-     * 
-     * @param tableName table name
-     * @param tableMetaData table meta data
+     * 添加一张表的元数据。
+     *
+     * @param tableName 表名
+     * @param tableMetaData 表的元数据
      */
     public void put(final String tableName, final TableMetaData tableMetaData) {
         tables.put(tableName.toLowerCase(), tableMetaData);
     }
-    
+
     /**
-     * Add table meta data map.
+     * 批量添加多个表的元数据。
      *
-     * @param tableMetaDataMap table meta data map
+     * @param tableMetaDataMap 多个表名与其元数据的映射
      */
     public void putAll(final Map<String, TableMetaData> tableMetaDataMap) {
         for (Entry<String, TableMetaData> entry : tableMetaDataMap.entrySet()) {
             put(entry.getKey(), entry.getValue());
         }
     }
-    
+
     /**
-     * Remove table meta data.
+     * 移除某个表的元数据。
      *
-     * @param tableName table name
+     * @param tableName 表名
      */
     public void remove(final String tableName) {
         tables.remove(tableName.toLowerCase());
     }
-    
+
     /**
-     * Judge contains table from table meta data or not.
+     * 判断是否包含某张表的元数据。
      *
-     * @param tableName table name
-     * @return contains table from table meta data or not
+     * @param tableName 表名
+     * @return 是否存在
      */
     public boolean containsTable(final String tableName) {
         return tables.containsKey(tableName.toLowerCase());
     }
-    
+
     /**
-     * Judge whether contains column name.
+     * 判断某张表是否包含指定列。
      *
-     * @param tableName table name
-     * @param columnName column name
-     * @return contains column name or not
+     * @param tableName 表名
+     * @param columnName 列名
+     * @return 是否存在该列
      */
     public boolean containsColumn(final String tableName, final String columnName) {
         return containsTable(tableName) && get(tableName).getColumns().containsKey(columnName.toLowerCase());
     }
-    
+
     /**
-     * Get all column names via table.
+     * 获取指定表的所有列名。
      *
-     * @param tableName table name
-     * @return column names
+     * @param tableName 表名
+     * @return 列名列表；若表不存在则返回空列表
      */
     public List<String> getAllColumnNames(final String tableName) {
         return containsTable(tableName) ? get(tableName).getColumnNames() : Collections.emptyList();

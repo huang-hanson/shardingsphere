@@ -28,39 +28,46 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * ShardingSphere rule meta data.
+ * ShardingSphere 规则元数据类。
+ * 存储所有规则配置（RuleConfiguration）及其对应的规则实现（ShardingSphereRule），
+ * 并提供按类型查找规则或配置的能力。
  */
 @RequiredArgsConstructor
 @Getter
 public final class ShardingSphereRuleMetaData {
-    
-    private final Collection<RuleConfiguration> configurations;
-    
-    private final Collection<ShardingSphereRule> rules;
-    
     /**
-     * Find rules by class.
+     * 规则配置集合（例如：分片规则、加密规则、读写分离规则等）
+     */
+    private final Collection<RuleConfiguration> configurations;
+    /**
+     * 实际规则对象集合（由配置生成的规则实现类）
+     */
+    private final Collection<ShardingSphereRule> rules;
+
+    /**
+     * 按类型查找所有匹配的规则实现
      *
-     * @param clazz target class
-     * @param <T> type of rule
-     * @return found rules
+     * @param clazz 目标规则的类型
+     * @param <T>   规则类型（ShardingSphereRule 的子类）
+     * @return 符合条件的规则集合
      */
     public <T extends ShardingSphereRule> Collection<T> findRules(final Class<T> clazz) {
         List<T> result = new LinkedList<>();
         for (ShardingSphereRule each : rules) {
+            // 判断该规则是否是目标类型或其子类
             if (clazz.isAssignableFrom(each.getClass())) {
                 result.add(clazz.cast(each));
             }
         }
         return result;
     }
-    
+
     /**
-     * Find rule configuration by class.
+     * 按类型查找所有匹配的规则配置
      *
-     * @param clazz target class
-     * @param <T> type of rule configuration
-     * @return found rule configurations
+     * @param clazz 目标配置的类型
+     * @param <T>   配置类型（RuleConfiguration 的子类）
+     * @return 符合条件的配置集合
      */
     public <T extends RuleConfiguration> Collection<T> findRuleConfiguration(final Class<T> clazz) {
         Collection<T> result = new LinkedList<>();
@@ -71,25 +78,25 @@ public final class ShardingSphereRuleMetaData {
         }
         return result;
     }
-    
+
     /**
-     * Find single rule configuration by class.
+     * 按类型查找**单个**规则配置（如果存在多个，只取第一个）
      *
-     * @param clazz target class
-     * @param <T> type of rule configuration
-     * @return found rule configuration
+     * @param clazz 目标配置类型
+     * @param <T>   配置类型（RuleConfiguration 的子类）
+     * @return 匹配到的单个配置，若未找到返回 Optional.empty()
      */
     public <T extends RuleConfiguration> Optional<T> findSingleRuleConfiguration(final Class<T> clazz) {
         Collection<T> foundRuleConfig = findRuleConfiguration(clazz);
         return foundRuleConfig.isEmpty() ? Optional.empty() : Optional.of(foundRuleConfig.iterator().next());
     }
-    
+
     /**
-     * Find single rule by class.
+     * 按类型查找**单个**规则对象（如果存在多个，只取第一个）
      *
-     * @param clazz target class
-     * @param <T> type of rule
-     * @return found single rule
+     * @param clazz 目标规则类型
+     * @param <T>   规则类型（ShardingSphereRule 的子类）
+     * @return 匹配到的单个规则，若未找到返回 Optional.empty()
      */
     public <T extends ShardingSphereRule> Optional<T> findSingleRule(final Class<T> clazz) {
         Collection<T> foundRules = findRules(clazz);

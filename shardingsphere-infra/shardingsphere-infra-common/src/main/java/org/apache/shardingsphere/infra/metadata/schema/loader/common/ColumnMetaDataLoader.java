@@ -34,44 +34,56 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Column meta data loader.
+ * 列元数据加载器。
+ * 用于加载指定表的所有字段信息，包括字段名、数据类型、是否主键、是否自增、是否区分大小写等。
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ColumnMetaDataLoader {
-    
+    // JDBC 元数据中常用的字段名
     private static final String COLUMN_NAME = "COLUMN_NAME";
     
     private static final String DATA_TYPE = "DATA_TYPE";
     
     private static final String TABLE_NAME = "TABLE_NAME";
-    
+
     /**
-     * Load column meta data list.
+     * 加载表的所有字段元数据。
      *
-     * @param connection connection
-     * @param tableNamePattern table name pattern
-     * @param databaseType database type
-     * @return column meta data list
-     * @throws SQLException SQL exception
+     * @param connection JDBC 连接
+     * @param tableNamePattern 表名（完全匹配）
+     * @param databaseType 数据库类型（用于适配不同 SQL 方言）
+     * @return 字段元数据集合
+     * @throws SQLException SQL 异常
      */
     public static Collection<ColumnMetaData> load(final Connection connection, final String tableNamePattern, final DatabaseType databaseType) throws SQLException {
         Collection<ColumnMetaData> result = new LinkedList<>();
+
+        // 加载主键字段名
         Collection<String> primaryKeys = loadPrimaryKeys(connection, tableNamePattern);
+        //字段名称集合
         List<String> columnNames = new ArrayList<>();
+        //字段类型集合
         List<Integer> columnTypes = new ArrayList<>();
+        //是否是主键集合
         List<Boolean> isPrimaryKeys = new ArrayList<>();
+        //字段是否是大小写敏感
         List<Boolean> isCaseSensitives = new ArrayList<>();
+        //使用原生的jdbc的connection获取字段元数据，并且对字段元数据进行遍历
         try (ResultSet resultSet = connection.getMetaData().getColumns(connection.getCatalog(), connection.getSchema(), tableNamePattern, "%")) {
             while (resultSet.next()) {
+                //字段名称
                 String tableName = resultSet.getString(TABLE_NAME);
                 if (Objects.equals(tableNamePattern, tableName)) {
                     String columnName = resultSet.getString(COLUMN_NAME);
+                    //字段类型
                     columnTypes.add(resultSet.getInt(DATA_TYPE));
+                    //是否是主键
                     isPrimaryKeys.add(primaryKeys.contains(columnName));
                     columnNames.add(columnName);
                 }
             }
         }
+        //判断表字段是否大小写敏感
         try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(generateEmptyResultSQL(tableNamePattern, databaseType))) {
             for (int i = 0; i < columnNames.size(); i++) {
                 boolean generated = resultSet.getMetaData().isAutoIncrement(i + 1);

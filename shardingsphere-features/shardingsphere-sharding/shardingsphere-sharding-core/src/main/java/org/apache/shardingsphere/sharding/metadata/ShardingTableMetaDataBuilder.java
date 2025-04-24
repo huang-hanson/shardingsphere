@@ -47,39 +47,58 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Table meta data builder for sharding.
+ * ShardingTableMetaDataBuilder 类用于构建分片表的元数据，结合 ShardingRule 和表的元数据加载。
+ * 该类实现了 RuleBasedTableMetaDataBuilder 接口，用于构建、修饰和验证表的元数据。
  */
 public final class ShardingTableMetaDataBuilder implements RuleBasedTableMetaDataBuilder<ShardingRule> {
     
     @Override
     public Map<String, TableMetaData> load(final Collection<String> tableNames, final ShardingRule rule, final SchemaBuilderMaterials materials) throws SQLException {
+        // 筛选出需要加载的表名，包含 ShardingRule 中的表规则或者广播表
         Collection<String> needLoadTables = tableNames.stream().filter(each -> rule.findTableRule(each).isPresent() || rule.isBroadcastTable(each)).collect(Collectors.toList());
+        // 如果没有需要加载的表，直接返回空的 Map
         if (needLoadTables.isEmpty()) {
             return Collections.emptyMap();
         }
+        // 判断是否启用表元数据检查
         boolean isCheckingMetaData = materials.getProps().getValue(ConfigurationPropertyKey.CHECK_TABLE_METADATA_ENABLED);
+        // 获取加载表元数据的材料集合
         Collection<TableMetaDataLoaderMaterial> tableMetaDataLoaderMaterials = TableMetaDataUtil.getTableMetaDataLoadMaterial(needLoadTables, materials, isCheckingMetaData);
+        // 如果没有需要加载的元数据材料，返回空 Map
         if (tableMetaDataLoaderMaterials.isEmpty()) {
             return Collections.emptyMap();
         }
+        // 加载所有表的元数据
         Collection<TableMetaData> tableMetaDataList = TableMetaDataLoaderEngine.load(tableMetaDataLoaderMaterials, materials.getDatabaseType());
+        // 如果启用了元数据检查，进行检查
         if (isCheckingMetaData) {
             checkTableMetaData(tableMetaDataList, rule);
         }
+        // 返回表名与表元数据的映射
         return getTableMetaDataMap(tableMetaDataList, rule);
     }
-    
+
     @Override
     public Map<String, TableMetaData> decorate(final Map<String, TableMetaData> tableMetaDataMap, final ShardingRule rule, final SchemaBuilderMaterials materials) {
+        // 对每个表元数据进行修饰，返回修饰后的元数据映射
         Map<String, TableMetaData> result = new LinkedHashMap<>();
         for (Entry<String, TableMetaData> entry : tableMetaDataMap.entrySet()) {
             result.put(entry.getKey(), decorate(entry.getKey(), entry.getValue(), rule));
         }
         return result;
-    }  
+    }
 
+    /**
+     * 对表元数据进行修饰，结合分片规则修饰表的列、索引和约束信息
+     *
+     * @param tableName 表名
+     * @param tableMetaData 表元数据
+     * @param shardingRule 分片规则
+     * @return 修饰后的表元数据
+     */
     private TableMetaData decorate(final String tableName, final TableMetaData tableMetaData, final ShardingRule shardingRule) {
-        return shardingRule.findTableRule(tableName).map(tableRule -> new TableMetaData(tableName, getColumnMetaDataList(tableMetaData, tableRule), 
+        // 如果找到了该表的分片规则，进行修饰；否则返回原始表元数据
+        return shardingRule.findTableRule(tableName).map(tableRule -> new TableMetaData(tableName, getColumnMetaDataList(tableMetaData, tableRule),
                 getIndexMetaDataList(tableMetaData, tableRule), getConstraintMetaDataList(tableMetaData, shardingRule, tableRule))).orElse(tableMetaData);
     }
     
