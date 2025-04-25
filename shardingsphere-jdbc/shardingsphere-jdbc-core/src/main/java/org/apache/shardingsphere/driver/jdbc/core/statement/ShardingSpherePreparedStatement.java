@@ -99,7 +99,17 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
+ * 预编译 SQL（使用 ? 占位符）
  * ShardingSphere prepared statement.
+ *
+ * 项目	ShardingSphereStatement	ShardingSpherePreparedStatement
+ * 继承关系	实现自 java.sql.Statement	实现自 java.sql.PreparedStatement
+ * SQL 执行方式	动态 SQL（每次传入完整 SQL 字符串）	预编译 SQL（使用 ? 占位符）
+ * 分片增强	ShardingSphere 会在执行前解析 SQL，并路由到对应的分片数据源	同样会进行 SQL 解析、改写、路由，但可以复用 SQL 模板，提高效率
+ * 执行效率	相对低，每次都重新解析 SQL	相对高，可复用 SQL 结构，提高性能
+ * SQL 注入防护	差	优秀，因为使用参数化查询
+ * 使用场景	SQL 简单、一次性执行	SQL 结构重复、参数不同、需要高性能
+ *
  */
 public final class ShardingSpherePreparedStatement extends AbstractPreparedStatementAdapter {
     
